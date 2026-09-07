@@ -24,7 +24,7 @@ Cloudflare 대시보드에 남아 있는 Access 보호는 수정본 배포 후 �
 
 ## AI 연결
 
-공개 앱은 `AI` 바인딩을 통해 Workers AI를 호출합니다. 방문자가 Cloudflare 계정 ID나 토큰을 입력할 필요가 없으며, 영어 대화에 `APP_ENCRYPTION_KEY`도 필요하지 않습니다. 운영자는 계정이 **Workers Free**인지 확인한 뒤 **빌드 변수** `CF_AI_FREE_PLAN_CONFIRMED=true`를 저장하고 다시 빌드해야 합니다. 기본값은 비활성화이며, 이 변수 자체가 요금제를 조회하거나 변경하지는 않습니다.
+공개 앱은 `AI` 바인딩을 통해 Workers AI를 호출합니다. 방문자가 Cloudflare 계정 ID나 토큰을 입력할 필요가 없으며, 영어 대화에 `APP_ENCRYPTION_KEY`도 필요하지 않습니다. 운영자는 계정이 **Workers Free**인지 확인한 뒤 Cloudflare의 **Runtime variables and secrets**에 Text 타입으로 `CF_AI_FREE_PLAN_CONFIRMED=true`를 입력하고 **Deploy**를 누릅니다. `keep_vars: true`로 이 설정을 이후 코드 배포에도 유지합니다. 빌드 변수는 이 값을 덮어쓰지 않습니다. 런타임 값이 없거나 `true`가 아니면 비활성화되며, 이 변수 자체가 요금제를 조회하거나 변경하지는 않습니다.
 
 현재 모델은 `@cf/meta/llama-3.3-70b-instruct-fp8-fast`입니다. 모든 방문자를 합쳐 하루 최대 50회 또는 보수적으로 예약한 8,000 Neurons 예산 중 먼저 도달한 한도에서 중단합니다. 브라우저를 바꿔도 앱 전체 한도는 초기화되지 않으며 한국 시간 오전 9시에 초기화됩니다. 실패한 요청도 포함하고 자동 재시도·다른 유료 공급자로의 전환은 하지 않습니다. 다른 앱의 사용량까지 포함하는 실제 한도는 Cloudflare 계정에서 확인해야 합니다.
 
