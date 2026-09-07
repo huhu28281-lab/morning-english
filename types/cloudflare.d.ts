@@ -21,5 +21,5 @@ interface D1Database {
   dump(): Promise<ArrayBuffer>;
 }
 declare module "cloudflare:workers" {
-  export const env: { DB?: D1Database; APP_ENCRYPTION_KEY?: string };
+  export const env: { DB?: D1Database; APP_ENCRYPTION_KEY?: string; AI?: {run(model:string,input:unknown):Promise<unknown>}; CF_AI_FREE_PLAN_CONFIRMED?: string };
 }

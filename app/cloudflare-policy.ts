@@ -1,6 +1,6 @@
 // Conservative app budget, not Cloudflare's live account balance.
 // Model prices checked against Cloudflare's published table on 2026-09-07.
-export const CF_MODEL="@cf/meta/llama-3.1-8b-instruct";
+export const CF_MODEL="@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 export const CF_MAX_OUTPUT_TOKENS=600;
 export const CF_MAX_REQUEST_BYTES=6000;
 export const CF_MAX_DAILY_CALLS=50;
@@ -19,7 +19,7 @@ export function cloudflareReservedNeurons(body:unknown) {
   if(bytes>CF_MAX_REQUEST_BYTES)throw new Error("Cloudflare request too large");
   // UTF-8 byte count bounds ordinary BPE tokens; allow extra template/schema
   // overhead and reserve all output tokens. Never refund uncertain usage.
-  return Math.ceil((bytes+2048)*25608/1000000+CF_MAX_OUTPUT_TOKENS*75147/1000000);
+  return Math.ceil((bytes+2048)*26668/1000000+CF_MAX_OUTPUT_TOKENS*204805/1000000);
 }
 export function cloudflareDay(now=new Date()) {
   const day=now.toISOString().slice(0,10);

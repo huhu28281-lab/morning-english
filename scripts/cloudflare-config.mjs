@@ -12,6 +12,8 @@ const config = {
   name:"morning-english", main:"./worker/cloudflare.ts", compatibility_date:"2026-05-15",
   compatibility_flags:["nodejs_compat"], workers_dev:true, preview_urls:false,
   assets:{binding:"ASSETS", run_worker_first:true},
+  ai:{binding:"AI"},
+  vars:{CF_AI_FREE_PLAN_CONFIRMED:process.env.CF_AI_FREE_PLAN_CONFIRMED?.trim()==="true"?"true":"false"},
   d1_databases:[{binding:"DB",database_name:"morning-english-db",database_id:databaseId,migrations_dir:"drizzle"}],
   observability:{enabled:true},
 };
