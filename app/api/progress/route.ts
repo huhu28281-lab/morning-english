@@ -4,10 +4,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const userId = (await headers()).get("oai-authenticated-user-id");
-  if (!userId) return Response.json({ error: "학습 기록을 불러오려면 다시 로그인해 주세요." }, { status: 401 });
+  if (!userId) return Response.json({ error: "앱을 새로고침한 뒤 다시 시도해 주세요." }, { status: 401 });
   try {
     const result = await progressDb().prepare("SELECT lesson_id AS lessonId, stage_id AS stageId, completed_at AS completedAt FROM study_progress WHERE user_id = ? ORDER BY completed_at DESC").bind(userId).all();
-    return Response.json({ progress: result.results }, { headers: { "Cache-Control": "private, no-store" } });
+    return Response.json({ progress: result.results, browserScoped: userId.startsWith("visitor:") }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     console.error("Progress load failed", error);
     return Response.json({ error: "학습 기록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요." }, { status: 503 });
@@ -15,7 +15,7 @@ export async function GET() {
 }
 export async function POST(request: Request) {
   const userId = (await headers()).get("oai-authenticated-user-id");
-  if (!userId) return Response.json({ error: "학습 기록을 저장하려면 다시 로그인해 주세요." }, { status: 401 });
+  if (!userId) return Response.json({ error: "앱을 새로고침한 뒤 다시 시도해 주세요." }, { status: 401 });
   if (request.headers.get("sec-fetch-site") === "cross-site") return Response.json({error:"요청을 확인할 수 없어요."},{status:403});
   let input: { lessonId?: number; stageId?: number };
   try { input = await request.json(); } catch { return Response.json({error:"학습 정보를 확인해 주세요."},{status:400}); }

@@ -9,9 +9,8 @@ interface InstallPrompt extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-const appUrl = "https://morning-english.huhu28281.chatgpt.site";
-
-export default function InstallApp() {
+export default function InstallApp({browserScoped = false}:{browserScoped?:boolean}) {
+  const [appUrl, setAppUrl] = useState("/");
   const [open, setOpen] = useState(false);
   const [installed, setInstalled] = useState(false);
   const [ready, setReady] = useState(false);
@@ -21,6 +20,7 @@ export default function InstallApp() {
   const prompt = useRef<InstallPrompt | null>(null);
 
   useEffect(() => {
+    setAppUrl(new URL("/", window.location.href).href);
     const nav = navigator as Navigator & { standalone?: boolean };
     const display = window.matchMedia("(display-mode: standalone)");
     const isStandalone = () => setInstalled(display.matches || nav.standalone === true);
@@ -80,7 +80,7 @@ export default function InstallApp() {
           : <ol><li>Chrome이나 Edge에서 이 앱을 여세요.</li><li>주소창의 <strong>설치 아이콘</strong>이나 브라우저 메뉴의 <strong>앱 설치</strong> 항목을 선택하세요.</li><li>설치 창에서 <strong>설치</strong>를 누르세요. 설치 후 앱 목록에서도 열 수 있어요.</li></ol>}
         </div>
         <div className="install-browser-help"><p>ChatGPT 안에서 보고 있다면 주소를 복사해 휴대폰의 Chrome이나 Safari에서 열어주세요.</p><div className="install-links"><a href={appUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={16}/>앱 주소 열기</a><button onClick={()=>void copyUrl()}><Copy size={16}/>주소 복사</button></div><input className="install-url" aria-label="모닝 잉글리시 주소" value={appUrl} readOnly onFocus={e=>e.currentTarget.select()}/></div>
-        <p className="install-footnote">처음 열 때 로그인이 필요할 수 있어요. 학습 기록은 같은 계정으로 이어집니다.</p>
+        <p className="install-footnote">{browserScoped ? "로그인 없이 사용할 수 있어요. 기록은 같은 브라우저에서 이어지며, 쿠키를 지우면 새로 시작합니다." : "학습 기록은 앱에서 이어서 확인할 수 있어요."}</p>
       </DialogContent>
     </Dialog>
   </>;

@@ -5,7 +5,7 @@ export class AppError extends Error {
 }
 export async function authenticatedUser(request?: Request) {
   const userId = (await headers()).get("oai-authenticated-user-id");
-  if (!userId) throw new AppError("다시 로그인한 뒤 이용해 주세요.", 401);
+  if (!userId) throw new AppError("앱을 새로고침한 뒤 다시 시도해 주세요.", 401);
   if (request && request.method !== "GET") {
     if (request.headers.get("sec-fetch-site") === "cross-site") throw new AppError("앱 안에서 다시 시도해 주세요.", 403);
     const origin = request.headers.get("origin");

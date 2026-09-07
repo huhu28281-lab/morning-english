@@ -1,10 +1,9 @@
-// Standalone entry point. The existing Sites entry point remains separate.
+// Public Cloudflare entry point. Records are scoped to an anonymous browser session.
 import app from "./index";
-import { trustedRequest, verifyAccessToken, type AccessConfig } from "./cloudflare-access";
+import { withVisitorSession } from "./visitor-session";
 
-type Env = Parameters<typeof app.fetch>[1] & AccessConfig;
+type Env = Parameters<typeof app.fetch>[1];
 type Context = Parameters<typeof app.fetch>[2];
-
 const initialSchema = [
   "CREATE TABLE IF NOT EXISTS `study_progress` (\n\t`user_id` text NOT NULL,\n\t`lesson_id` integer NOT NULL,\n\t`stage_id` integer NOT NULL,\n\t`completed_at` text NOT NULL,\n\tPRIMARY KEY(`user_id`, `lesson_id`, `stage_id`)\n)",
   "CREATE TABLE IF NOT EXISTS `ai_connections` (\n\t`user_id` text NOT NULL,\n\t`provider` text NOT NULL,\n\t`encrypted_secret` text NOT NULL,\n\t`endpoint` text DEFAULT '' NOT NULL,\n\t`updated_at` text NOT NULL,\n\tPRIMARY KEY(`user_id`, `provider`)\n)",
@@ -23,29 +22,22 @@ async function ensureDatabase(db: D1Database) {
   await pending;
 }
 
+
 export default {
-  async fetch(request: Request, env: Env, ctx: Context): Promise<Response> {
-    if (!env.CF_ACCESS_TEAM_DOMAIN || !env.CF_ACCESS_AUD || !env.CF_OWNER_EMAIL) {
-      return new Response("본인 전용 로그인 설정을 완료해야 앱을 사용할 수 있어요.", {status:503,headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}});
-    }
-    let user;
-    try { user = await verifyAccessToken(request.headers.get("Cf-Access-Jwt-Assertion") || "", env); }
-    catch { return new Response("Cloudflare Access에서 본인 계정으로 로그인해 주세요.", {status:403,headers:{"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-store"}}); }
-    const authenticated = trustedRequest(request, user);
-    // Static files also pass through Access; do not serve an SPA fallback for APIs.
-    const path = new URL(request.url).pathname;
-    if ((request.method === "GET" || request.method === "HEAD") && !path.startsWith("/api/")) {
-      const asset = await env.ASSETS.fetch(authenticated);
-      if (asset.status !== 404) return asset;
-    }
-    // Initialize new installations only after owner authentication.
-    // IF NOT EXISTS preserves existing records and permits later migrations.
-    if (path.startsWith("/api/")) {
-      try { await ensureDatabase(env.DB); }
-      catch {
-        return Response.json({error:"저장소에 연결하지 못했어요. 잠시 후 다시 시도해 주세요."}, {status:503,headers:{"Cache-Control":"no-store"}});
+  fetch(request: Request, env: Env, ctx: Context): Promise<Response> {
+    return withVisitorSession(request, async visitorRequest => {
+      const path = new URL(request.url).pathname;
+      if ((request.method === "GET" || request.method === "HEAD") && !path.startsWith("/api/")) {
+        const asset = await env.ASSETS.fetch(visitorRequest);
+        if (asset.status !== 404) return asset;
       }
-    }
-    return app.fetch(authenticated, env, ctx);
+      if (path.startsWith("/api/")) {
+        try { await ensureDatabase(env.DB); }
+        catch {
+          return Response.json({error:"저장소에 연결하지 못했어요. 잠시 후 다시 시도해 주세요."}, {status:503,headers:{"Cache-Control":"no-store"}});
+        }
+      }
+      return app.fetch(visitorRequest, env, ctx);
+    });
   },
 };

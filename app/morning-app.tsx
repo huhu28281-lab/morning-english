@@ -45,6 +45,7 @@ export default function MorningApp() {
   const [translation, setTranslation] = useState(true);
   const [rate, setRate] = useState("0.85");
   const [records, setRecords] = useState<RecordRow[]>([]);
+  const [browserScoped, setBrowserScoped] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -80,6 +81,7 @@ export default function MorningApp() {
       const data = await response.json();
       if (!response.ok || !Array.isArray(data.progress)) throw new Error(data.error || "학습 기록을 불러오지 못했어요.");
       const rows = data.progress as RecordRow[]; setRecords(rows);
+      setBrowserScoped(data.browserScoped === true);
       if (resume && !interaction.current) {
         const course = levelRef.current === "work" ? workLessons : beginnerLessons;
         const next = course.find(l => rows.filter(r => r.lessonId === l.id).length < 6) || course[0];
@@ -209,7 +211,7 @@ export default function MorningApp() {
     <a className="skip-link" href="#study-main">학습으로 바로 가기</a>
     <header className="topbar">
       <button className="brand" onClick={() => changeTab("today")} aria-label="모닝 잉글리시 오늘의 학습"><span className="brand-icon"><Sunrise aria-hidden="true" size={27}/></span><span>morning<span className="brand-dot">.</span><small>모닝 잉글리시</small></span></button>
-      <div className="top-meta"><span className="top-date">{date}</span><button className="icon-button settings-trigger" aria-label="AI 연결 설정" onClick={()=>setAiSettingsOpen(true)}><Settings2 size={20}/></button><InstallApp/></div>
+      <div className="top-meta"><span className="top-date">{date}</span><button className="icon-button settings-trigger" aria-label="AI 연결 설정" onClick={()=>setAiSettingsOpen(true)}><Settings2 size={20}/></button><InstallApp browserScoped={browserScoped}/></div>
     </header>
     <Tabs value={tab} onValueChange={changeTab} orientation={wideLayout ? "vertical" : "horizontal"} className={`workspace-tabs tab-${tab}`}>
       <div className="nav-bar"><TabsList className="main-tabs" variant="line" aria-label="학습 메뉴"><TabsTrigger value="today"><Sunrise/>오늘 회화</TabsTrigger><TabsTrigger value="course"><BookOpen/>10일 코스</TabsTrigger><TabsTrigger value="words"><Bookmark/>단어장</TabsTrigger><TabsTrigger value="pronunciation"><Mic/>발음 확인</TabsTrigger><TabsTrigger value="chat"><MessageCircle/>AI 대화</TabsTrigger><TabsTrigger value="history"><CalendarDays/>학습 기록</TabsTrigger></TabsList><span className="commute-label"><TrainFront size={16}/> 출근길 60분</span></div>
@@ -274,7 +276,7 @@ export default function MorningApp() {
       <TabsContent value="words"><Wordbook book={book} rate={Number(rate)} onPractice={practicePronunciation}/></TabsContent>
       <TabsContent value="pronunciation"><Pronunciation initialText={pronunciationText} rate={Number(rate)} connections={connections} onConnect={()=>setAiSettingsOpen(true)}/></TabsContent>
       <TabsContent value="chat"><AiChat conversation={conversation} onConversation={setConversation} level={level} rate={Number(rate)} quiet={quiet} connections={connections} onConnect={()=>setAiSettingsOpen(true)} onPractice={practicePronunciation}/></TabsContent>
-      <TabsContent value="history"><div className="page-heading"><div><p className="eyebrow">SMALL STEPS ADD UP</p><h1>차곡차곡, 나의 영어.</h1><p className="heading-sub">완료한 단계와 수업을 여기에서 확인하세요.</p></div></div>
+      <TabsContent value="history"><div className="page-heading"><div><p className="eyebrow">SMALL STEPS ADD UP</p><h1>차곡차곡, 나의 영어.</h1><p className="heading-sub">{browserScoped ? "기록과 단어장은 이 브라우저에서 이어집니다. 쿠키를 지우거나 다른 기기로 열면 새로 시작해요." : "완료한 단계와 수업을 여기에서 확인하세요."}</p></div></div>
         <div className="history-stats"><div><CalendarDays/><strong>{activeDateCount}<small>일</small></strong><span>완료 기록이 있는 날</span></div><div><BookOpen/><strong>{allCompletedDays}<small>/ 20</small></strong><span>완료한 수업 · 두 코스 합계</span></div><div><CheckCircle2/><strong>{records.length}<small>단계</small></strong><span>완료한 학습</span></div></div>
         {loadError && <div className="status-banner error" role="alert">{loadError}<button onClick={()=>void load(false)}>다시 불러오기</button></div>}
         {loading ? <div className="empty-state"><Loader2 className="spin"/><h2>학습 기록을 불러오고 있어요.</h2></div> : records.length===0 ? <div className="empty-state"><Sunrise size={44}/><h2>첫 한 걸음을 기다리고 있어요.</h2><p>학습을 마치고 ‘이 단계 완료’를 누르면 기록이 남아요.</p><button className="primary-button" onClick={()=>changeTab("today")}>오늘의 회화 시작하기<ArrowRight size={18}/></button></div> : <div className="history-list">{allLessons.filter(l=>records.some(r=>r.lessonId===l.id)).map(l=>{const rows=records.filter(r=>r.lessonId===l.id);return <button key={l.id} onClick={()=>chooseDay(l.id)}><span className="history-day">{number(dayNumber(l.id))}</span><div><h2>{l.title}</h2><p>{l.id > 10 ? "실전 초급" : "기초 다지기"} · {new Intl.DateTimeFormat("ko-KR",{timeZone:"Asia/Seoul",month:"long",day:"numeric"}).format(new Date(rows[0].completedAt))} · {rows.length}/6단계 완료</p></div><ChevronRight size={20}/></button>;})}</div>}

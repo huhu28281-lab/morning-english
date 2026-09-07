@@ -1,26 +1,29 @@
 # Morning English
 
-출근길 한 시간을 활용하는 직장인 영어 회화 학습 앱입니다.
+출근길 한 시간을 활용하는 직장인 영어 회화 앱입니다.
 
 - 실전 회화와 기초 과정, 하루 6단계 학습
 - 표현 듣기, 따라 말하기, 조용히 공부하기
-- 단어장과 학습 기록 저장
-- Cloudflare Workers AI 영어 대화와 교정
-- Azure 연결 시 발음 평가, 녹음과 재생
+- 단어장, 복습 카드, 학습 기록
+- Cloudflare Workers AI 영어 대화와 Azure 연결 시 발음 평가
 - 모바일 화면 및 홈 화면 설치용 PWA 아이콘
 
-React 19, Vinext, Tailwind CSS, Cloudflare Workers와 D1을 사용합니다. 외부 AI 및 발음 평가는 해당 서비스 연결이 필요합니다.
+## 공개 접속
 
-## Cloudflare 배포
+Cloudflare 배포본은 로그인 없이 이용합니다. 방문자마다 예측하기 어려운 전용 쿠키를 발급하고 그 해시를 D1의 사용자 키로 사용합니다. 학습 기록, 단어장, AI 연결 설정은 방문자별로 분리되며 기존 계정의 자료를 공유하지 않습니다.
 
-[이전 및 배포 안내](CLOUDFLARE-MIGRATION.md)를 따라 Cloudflare 계정, D1, 본인 이메일을 허용하는 Access 로그인 및 GitHub Secrets를 설정하세요.
+기록은 같은 브라우저에서 이어집니다. 쿠키를 삭제하거나 다른 브라우저·기기를 쓰면 새로운 방문자로 시작합니다. 기존 자료 복원은 수행하지 않습니다.
 
-`npm ci` 후 계정별 변수를 설정하고 `npm run build:cloudflare`로 빌드합니다. 일반 `npm run build`는 Sites용 빌드입니다.
+## 배포
 
-GitHub Actions 배포는 저장소 변수 `CF_MIGRATION_READY=true`를 설정할 때 활성화됩니다. 현재 소스 업로드만으로 Cloudflare에 배포되지는 않습니다.
+React 19, Vinext, Tailwind CSS, Cloudflare Workers와 D1을 사용합니다. [Cloudflare 배포 안내](CLOUDFLARE-MIGRATION.md)를 확인하세요.
 
-## 데이터와 비밀 값
+빌드: `npm run build:cloudflare` (빌드 변수 `CF_D1_DATABASE_ID` 필요).
 
-저장소는 공개이며, 앱 접근은 Cloudflare Access를 통해 본인에게만 허용하도록 구성되어 있습니다. API 토큰과 고정 암호화 키는 비밀 값으로 관리하고 코드에 넣지 마세요. 운영 데이터와 환경 파일은 이 저장소에 포함하지 않습니다. 기존 서비스의 학습 기록을 새 D1으로 옮기는 작업은 별도로 필요합니다.
+Cloudflare 대시보드에 남아 있는 Access 보호는 수정본 배포 후 해당 Worker에서 해제해야 합니다. 소스 수정만으로 Cloudflare의 정책이 삭제되지는 않습니다.
 
-AI 사용량 제한이 포함되어 있으며, 실제 무료 한도와 사용량은 Cloudflare 계정에서 확인해야 합니다. 자동 유료 서비스 전환은 없습니다.
+## AI 연결
+
+각 방문자가 입력한 API 토큰은 서버에서 암호화해 해당 방문자에게만 연결합니다. 연결 저장에는 운영 환경의 고정 `APP_ENCRYPTION_KEY`가 필요합니다. 로그인 제거만으로 AI 서비스가 자동 연결되지는 않습니다. 토큰과 운영 환경 파일을 GitHub에 넣지 마세요.
+
+Cloudflare AI의 계정별 일일 사용 제한과 유료 서비스로 자동 전환하지 않는 동작은 유지합니다. 실제 무료 한도 및 다른 앱의 사용량은 Cloudflare 계정에서 확인해야 합니다.
