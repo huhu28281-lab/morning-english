@@ -1,0 +1,48 @@
+name: Publish Morning English to Cloudflare
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: morning-english-cloudflare
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: ${{ vars.CF_MIGRATION_READY == 'true' }}
+    runs-on: ubuntu-latest
+    environment: cloudflare-production
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      APP_ENCRYPTION_KEY: ${{ secrets.APP_ENCRYPTION_KEY }}
+      CF_D1_DATABASE_ID: ${{ vars.CF_D1_DATABASE_ID }}
+      CF_ACCESS_TEAM_DOMAIN: ${{ vars.CF_ACCESS_TEAM_DOMAIN }}
+      CF_ACCESS_AUD: ${{ vars.CF_ACCESS_AUD }}
+      CF_OWNER_EMAIL: ${{ vars.CF_OWNER_EMAIL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Check credentials without printing values
+        run: |
+          node --input-type=module -e '
+            for (const name of ["CLOUDFLARE_ACCOUNT_ID","CLOUDFLARE_API_TOKEN","APP_ENCRYPTION_KEY"]) {
+              if (!process.env[name]) throw new Error("Missing secret: " + name);
+            }
+            if (Buffer.from(process.env.APP_ENCRYPTION_KEY,"base64").length !== 32) throw new Error("Invalid encryption key");
+          '
+      - name: Verify owner-only authentication
+        run: node --experimental-strip-types --test tests/cloudflare-access.test.mjs
+      - run: npm run build:cloudflare
+      - name: Apply D1 migrations
+        run: npx --no-install wrangler d1 migrations apply DB --remote --config .cloudflare-deploy.json
+      - name: Publish Worker and static files
+        run: npx --no-install wrangler deploy --config dist/server/wrangler.json
+      - name: Supply encryption secret
+        run: node scripts/cloudflare-secret.mjs

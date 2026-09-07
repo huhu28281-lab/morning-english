@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1788738022650,
+      "tag": "0000_messy_squadron_supreme",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788743521033,
+      "tag": "0001_fine_warbound",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788747077991,
+      "tag": "0002_outstanding_jamie_braddock",
+      "breakpoints": true
+    }
+  ]
+}
