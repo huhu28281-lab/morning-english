@@ -1,4 +1,4 @@
-CREATE TABLE `cloudflare_daily_usage` (
+CREATE TABLE IF NOT EXISTS `cloudflare_daily_usage` (
 	`account_id` text NOT NULL,
 	`day` text NOT NULL,
 	`calls` integer DEFAULT 0 NOT NULL,

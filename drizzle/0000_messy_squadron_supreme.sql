@@ -1,4 +1,4 @@
-CREATE TABLE `study_progress` (
+CREATE TABLE IF NOT EXISTS `study_progress` (
 	`user_id` text NOT NULL,
 	`lesson_id` integer NOT NULL,
 	`stage_id` integer NOT NULL,

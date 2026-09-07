@@ -1,4 +1,4 @@
-CREATE TABLE `ai_connections` (
+CREATE TABLE IF NOT EXISTS `ai_connections` (
 	`user_id` text NOT NULL,
 	`provider` text NOT NULL,
 	`encrypted_secret` text NOT NULL,
@@ -7,7 +7,7 @@ CREATE TABLE `ai_connections` (
 	PRIMARY KEY(`user_id`, `provider`)
 );
 --> statement-breakpoint
-CREATE TABLE `ai_usage` (
+CREATE TABLE IF NOT EXISTS `ai_usage` (
 	`user_id` text NOT NULL,
 	`provider` text NOT NULL,
 	`window` text NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE `ai_usage` (
 	PRIMARY KEY(`user_id`, `provider`, `window`)
 );
 --> statement-breakpoint
-CREATE TABLE `vocabulary` (
+CREATE TABLE IF NOT EXISTS `vocabulary` (
 	`user_id` text NOT NULL,
 	`word_key` text NOT NULL,
 	`english` text NOT NULL,
