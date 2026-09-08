@@ -720,3 +720,11 @@ button:focus-visible,input:focus-visible,a:focus-visible { outline-color:#7dac86
 .guide-trigger {white-space:nowrap;}
 @media(max-width:760px) {.guide-grid {grid-template-columns:minmax(0,1fr);}.guide-trigger {padding:9px 10px;}}
 @media(max-width:640px) {.weekly-banner {align-items:flex-start;flex-direction:column;padding:16px;}.weekly-banner button {width:100%;justify-content:center;}}
+
+/* A small commuting companion, kept beside the learning controls. */
+.today-intro {display:flex;align-items:center;gap:18px;min-width:0;}
+.today-intro>div {min-width:0;}
+.morning-mascot {width:120px;height:120px;object-fit:contain;flex:none;border-radius:28px;}
+.empty-state .empty-mascot {display:block;width:120px;height:120px;object-fit:contain;margin:0 auto 14px;border-radius:28px;}
+@media(max-width:760px) {.today-intro {gap:12px;}.morning-mascot {width:84px;height:84px;border-radius:20px;}}
+@media(max-width:380px) {.morning-mascot {width:64px;height:64px;}.today-intro {gap:10px;}}
