@@ -722,6 +722,20 @@ button:focus-visible,input:focus-visible,a:focus-visible { outline-color:#7dac86
 @media(max-width:640px) {.weekly-banner {align-items:flex-start;flex-direction:column;padding:16px;}.weekly-banner button {width:100%;justify-content:center;}}
 
 /* A small commuting companion, kept beside the learning controls. */
+.chick-button {display:block;flex:none;background:transparent;border:0;padding:0;border-radius:28px;cursor:pointer;touch-action:manipulation;}
+.chick-button:focus-visible {outline:3px solid #146653;outline-offset:5px;}
+.chick-button .morning-mascot {display:block;transform-origin:50% 90%;}
+.chick-button.chick-empty {margin:0 auto 14px;}
+.chick-button.is-dancing .morning-mascot {animation:chick-dance 800ms ease-in-out 4;}
+@keyframes chick-dance {
+  0%,100% {transform:translateY(0) rotate(0deg);}
+  15% {transform:translateY(-7px) rotate(-9deg);}
+  30% {transform:translateY(0) rotate(-5deg) scale(1.03,.97);}
+  50% {transform:translateY(-10px) rotate(9deg);}
+  70% {transform:translateY(0) rotate(5deg) scale(1.03,.97);}
+  85% {transform:translateY(-5px) rotate(-5deg);}
+}
+@media(prefers-reduced-motion:reduce) {.chick-button.is-dancing .morning-mascot {animation:none;}.chick-button.is-dancing {outline:2px solid #146653;outline-offset:3px;}}
 .today-intro {display:flex;align-items:center;gap:18px;min-width:0;}
 .today-intro>div {min-width:0;}
 .morning-mascot {width:120px;height:120px;object-fit:contain;flex:none;border-radius:28px;}
