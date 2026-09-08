@@ -24,3 +24,11 @@ export function weeklyIdentity(id:number) {
 }
 export const lessonDay=(id:number)=>id>=100000?id%10:id>10?id-10:id;
 export const lessonLevel=(id:number):StudyLevel=>weeklyIdentity(id)?.level || (id>10?"work":"basics");
+
+export function scheduledDay(now=new Date()) {
+  const weekday=new Date(now.getTime()+OFFSET).getUTCDay();
+  return weekday===0?5:Math.min(weekday,5);
+}
+export function lessonDate(weekStart:string,day:number) {
+  return new Date(weekDate(weekStart).getTime()+(day-1)*DAY);
+}

@@ -18,7 +18,7 @@ import AiChat, { type Conversation } from "./ai-chat";
 import { useConnections } from "./use-connections";
 import StudyGuide from "./study-guide";
 import DancingChick from "./dancing-chick";
-import { lessonDay, lessonLevel, studyWeek, weeklyIdentity, type Curriculum } from "./weekly-types";
+import { lessonDay, lessonLevel, studyWeek, weeklyIdentity, scheduledDay, lessonDate, type Curriculum } from "./weekly-types";
 
 type RecordRow = { lessonId: number; stageId: number; completedAt: string };
 const stageIcons = [Headphones, BookOpen, Mic, MessageCircle, Brain, CheckCircle2];
@@ -92,7 +92,7 @@ export default function MorningApp() {
       setBrowserScoped(data.browserScoped === true);
       if (resume && !interaction.current) {
         const course = nextCurriculum[levelRef.current].lessons;
-        const next = course.find(l => rows.filter(r => r.lessonId === l.id).length < 6) || course[0];
+        const next = course[scheduledDay()-1] || course[0];
         const nextStage = beginnerStages.findIndex((_, index) => !rows.some(r => r.lessonId === next.id && r.stageId === index));
         setDay(next.id); setStage(nextStage < 0 ? 0 : nextStage);
       }
@@ -108,7 +108,7 @@ export default function MorningApp() {
   }, []);
 
   useEffect(() => {
-    setDate(new Intl.DateTimeFormat("ko-KR", {month:"long", day:"numeric", weekday:"long"}).format(new Date()));
+    setDate(new Intl.DateTimeFormat("ko-KR", {timeZone:"Asia/Seoul",month:"long", day:"numeric", weekday:"long"}).format(new Date()));
     try {
       const prefs = JSON.parse(localStorage.getItem("morning-ui") || "{}");
       if (prefs.level === "basics" || prefs.level === "work") { levelRef.current = prefs.level; setLevel(prefs.level); setDay(prefs.level === "work" ? 11 : 1); }
@@ -162,7 +162,7 @@ export default function MorningApp() {
   const changeLevel = (value: string) => {
     if (saving || (value !== "work" && value !== "basics")) return;
     const course = curriculum?.[value].lessons || (value === "work" ? workLessons : beginnerLessons);
-    const next = course.find(l => records.filter(r => r.lessonId === l.id).length < 6) || course[0];
+    const next = course[scheduledDay()-1] || course[0];
     chooseDay(next.id);
   };
   const changeTab = (value: string) => { interaction.current = true; speech.stop(); setTimerOn(false); setTab(value); };
@@ -232,6 +232,16 @@ export default function MorningApp() {
       <button className="brand" onClick={() => changeTab("today")} aria-label="모닝 잉글리시 오늘의 학습"><span className="brand-icon"><Sunrise aria-hidden="true" size={27}/></span><span>morning<span className="brand-dot">.</span><small>모닝 잉글리시</small></span></button>
       <div className="top-meta"><span className="top-date">{date}</span><button className="secondary-button guide-trigger" onClick={()=>changeTab("help")} aria-pressed={tab==="help"}><CircleHelp size={18}/>사용법</button><InstallApp browserScoped={browserScoped}/></div>
     </header>
+    <nav className="lesson-days" aria-label="이번 주 요일별 학습">
+      {curriculum[level].lessons.map((item,index)=>{
+        const dateForLesson=lessonDate(curriculum[level].weekStart,index+1);
+        const isToday=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Seoul"}).format(dateForLesson)===new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Seoul"}).format(new Date());
+        return <button key={item.id} type="button" disabled={saving} onClick={()=>chooseDay(item.id)} aria-pressed={tab==="today" && day===item.id} aria-label={`${index+1}일차, ${new Intl.DateTimeFormat("ko-KR",{timeZone:"Asia/Seoul",month:"long",day:"numeric",weekday:"long"}).format(dateForLesson)}${isToday?", 오늘":""}`}>
+          <span>{["월","화","수","목","금"][index]} <time dateTime={new Date(dateForLesson.getTime()+9*3600000).toISOString().slice(0,10)}>{new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Seoul",month:"numeric",day:"numeric"}).format(dateForLesson)}</time></span>
+          <strong>{index+1}일차</strong><small>{isToday?"오늘":records.filter(r=>r.lessonId===item.id).length===6?"완료":"학습"}</small>
+        </button>;
+      })}
+    </nav>
     <Tabs value={tab} onValueChange={changeTab} orientation={wideLayout ? "vertical" : "horizontal"} className={`workspace-tabs tab-${tab}`}>
       <div className="nav-bar"><TabsList className="main-tabs" variant="line" aria-label="학습 메뉴"><TabsTrigger value="today"><Sunrise/>오늘 회화</TabsTrigger><TabsTrigger value="course"><BookOpen/>이번 주 학습</TabsTrigger><TabsTrigger value="words"><Bookmark/>단어장</TabsTrigger><TabsTrigger value="pronunciation"><Mic/>발음 연습</TabsTrigger><TabsTrigger value="chat"><MessageCircle/>AI 대화</TabsTrigger><TabsTrigger value="history"><CalendarDays/>학습 기록</TabsTrigger><TabsTrigger value="help"><CircleHelp/>사용법</TabsTrigger></TabsList><span className="commute-label"><TrainFront size={16}/> 출근길 60분</span></div>
 
