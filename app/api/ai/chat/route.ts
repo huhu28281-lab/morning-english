@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     });
     if (messages[messages.length-1].role!=="user") throw new AppError("먼저 영어로 말해보세요.");
     const managed = userId.startsWith("visitor:");
-    if (managed && workersAiState(env) !== "ready") throw new AppError("AI 대화가 아직 활성화되지 않았어요. 운영자의 설정이 필요합니다.",503);
+    if (managed && workersAiState(env) !== "ready") throw new AppError("현재 AI 대화를 이용할 수 없어요.",503);
     const connection = managed ? null : await getConnection(userId,"cloudflare");
     const budgetId = managed ? SHARED_AI_BUDGET : connection?.accountId;
     if(!budgetId)throw new AppError("Cloudflare 연결을 다시 설정해 주세요.",428);

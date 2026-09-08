@@ -714,4 +714,9 @@ button:focus-visible,input:focus-visible,a:focus-visible { outline-color:#7dac86
 .weekly-banner p {margin:4px 0;font-size:13px;line-height:1.6;}
 .weekly-banner small {font-size:12px;opacity:.8;}
 .weekly-banner button {flex-shrink:0;}
+.guide-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;}
+.guide-section h2 {display:flex;align-items:center;gap:10px;margin:0 0 16px;font-size:19px;}
+.guide-section p {margin:12px 0 0;font-size:14px;line-height:1.85;color:var(--muted-foreground);word-break:keep-all;overflow-wrap:anywhere;}
+.guide-trigger {white-space:nowrap;}
+@media(max-width:760px) {.guide-grid {grid-template-columns:minmax(0,1fr);}.guide-trigger {padding:9px 10px;}}
 @media(max-width:640px) {.weekly-banner {align-items:flex-start;flex-direction:column;padding:16px;}.weekly-banner button {width:100%;justify-content:center;}}
