@@ -20,6 +20,17 @@ Builds의 Variables and secrets에는 실제 D1 ID를 `CF_D1_DATABASE_ID`라는 
 
 새 데이터베이스의 테이블은 첫 API 요청에서도 생성됩니다. 재실행은 기존 기록을 지우지 않습니다. 빌드·배포 토큰에는 해당 계정의 Workers 배포 및 D1 마이그레이션 권한이 필요합니다. Worker 이름과 자산 경로는 빌드 결과 `dist/server/wrangler.json`을 사용합니다.
 
+주간 학습용 새 테이블은 `0003_sudden_hiroim.sql` 마이그레이션으로 생성합니다. `npm run build:cloudflare`는 Workers Builds의 `WORKERS_CI=1`을 확인하면 빌드 성공 뒤 D1 마이그레이션을 적용합니다. 실패 시 이전 앱을 유지하도록 빌드를 실패 처리합니다. 배포 명령에서 같은 마이그레이션을 다시 실행해도 적용 이력에 따라 건너뜁니다. 로컬에서는 원격 마이그레이션을 실행하지 않습니다.
+
+## 매주 바뀌는 학습 자료
+
+- 매주 월요일 00:00 KST에 주차가 전환됩니다. 난도별 5일×5개 회화, 단어·표현 10개를 제공합니다.
+- `triggers.crons: ["0 20 * * *"]`는 UTC 기준이며 매일 오전 5시 KST에 다음 주 교재를 미리 준비합니다. 이미 공개된 교재는 변경하지 않습니다.
+- Workers AI 활성화 값이 정확히 `true`일 때만 호출하고, 대화와 같은 D1 공유 일일 예산에서 생성 비용을 먼저 예약합니다. 두 난도 각각 하루 한 번까지만 생성 시도합니다.
+- 검증에 실패하거나 AI가 비활성화된 경우 준비 교재로 주간 학습을 제공합니다. 화면에서 준비 교재와 AI 교재를 구분합니다.
+- 이전 주의 완료 기록, 저장한 단어와 외운 표시는 유지합니다. 주차별 수업 ID를 사용하며, 개인 기록 조회는 방문자 ID로 제한합니다.
+- [Cloudflare Cron 실행 방식](https://developers.cloudflare.com/workers/runtime-apis/handlers/scheduled/)에 따라 작업을 수행합니다. 첫 실제 AI 생성 성공은 `weekly_curriculum_prepared` 로그 또는 다음 주의 `source: ai` 자료로 확인합니다. 배포 성공만으로 실제 AI 생성 성공을 단정하지 않습니다.
+
 ## 기존 Access 보호 해제
 
 공개 버전의 배포가 성공한 뒤 Workers & Pages에서 `morning-english`를 선택하고 Access 탭에서 이 Worker의 로그인 보호를 해제합니다. 계정 전체 보호가 적용되어 있다면 이 Worker만 공개하도록 설정합니다. 다른 앱의 Access 정책이나 계정 전체 정책은 삭제하지 않습니다. 로그인 화면이 계속되면 이 Worker에 적용된 호스트 정책도 확인합니다.
@@ -46,7 +57,7 @@ Builds의 Variables and secrets에는 실제 D1 ID를 `CF_D1_DATABASE_ID`라는 
 ## 확인
 
 ```sh
-node --experimental-strip-types --test tests/visitor-session.test.mjs tests/workers-ai.test.mjs tests/learning-services.test.mjs
+node --experimental-strip-types --test tests/visitor-session.test.mjs tests/workers-ai.test.mjs tests/learning-services.test.mjs tests/weekly-curriculum.test.mjs
 npm run build:cloudflare
 ```
 

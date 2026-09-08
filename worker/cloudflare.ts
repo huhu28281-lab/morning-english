@@ -1,6 +1,9 @@
 // Public Cloudflare entry point. Records are scoped to an anonymous browser session.
 import app from "./index";
 import { withVisitorSession } from "./visitor-session";
+import { prepareNextWeek } from "../app/weekly-generation";
+import { SHARED_AI_BUDGET, type WorkersAiEnv } from "../app/workers-ai";
+import { reserveCloudflareBudget } from "../app/ai-server";
 
 type Env = Parameters<typeof app.fetch>[1];
 type Context = Parameters<typeof app.fetch>[2];
@@ -24,6 +27,10 @@ async function ensureDatabase(db: D1Database) {
 
 
 export default {
+  async scheduled(_controller:unknown,env:Env & WorkersAiEnv) {
+    await ensureDatabase(env.DB);
+    await prepareNextWeek(env.DB,env,neurons=>reserveCloudflareBudget(SHARED_AI_BUDGET,neurons));
+  },
   fetch(request: Request, env: Env, ctx: Context): Promise<Response> {
     return withVisitorSession(request, async visitorRequest => {
       const path = new URL(request.url).pathname;

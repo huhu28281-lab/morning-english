@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { progressDb } from "@/db/progress";
+import { publishedLesson } from "@/app/weekly-store";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
@@ -19,8 +20,9 @@ export async function POST(request: Request) {
   if (request.headers.get("sec-fetch-site") === "cross-site") return Response.json({error:"요청을 확인할 수 없어요."},{status:403});
   let input: { lessonId?: number; stageId?: number };
   try { input = await request.json(); } catch { return Response.json({error:"학습 정보를 확인해 주세요."},{status:400}); }
-  if (!input || !Number.isInteger(input.lessonId) || !Number.isInteger(input.stageId) || input.lessonId! < 1 || input.lessonId! > 20 || input.stageId! < 0 || input.stageId! > 5) return Response.json({error:"올바른 수업을 선택해 주세요."},{status:400});
+  if (!input || !Number.isInteger(input.lessonId) || !Number.isInteger(input.stageId) || input.lessonId! < 1 || input.stageId! < 0 || input.stageId! > 5) return Response.json({error:"올바른 수업을 선택해 주세요."},{status:400});
   try {
+    if(!await publishedLesson(progressDb(),input.lessonId!))return Response.json({error:"올바른 수업을 선택해 주세요."},{status:400});
     const completedAt = new Date().toISOString();
     await progressDb().prepare("INSERT INTO study_progress (user_id, lesson_id, stage_id, completed_at) VALUES (?, ?, ?, ?) ON CONFLICT(user_id, lesson_id, stage_id) DO NOTHING").bind(userId, input.lessonId, input.stageId, completedAt).run();
     const row = await progressDb().prepare("SELECT lesson_id AS lessonId, stage_id AS stageId, completed_at AS completedAt FROM study_progress WHERE user_id = ? AND lesson_id = ? AND stage_id = ?").bind(userId, input.lessonId, input.stageId).first();

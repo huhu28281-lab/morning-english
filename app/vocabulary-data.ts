@@ -1,6 +1,11 @@
 export type Word = { english: string; meaning: string; example: string; exampleKo: string; known: boolean; saved: boolean };
 const w = (english: string, meaning: string, example: string, exampleKo: string): Word => ({english,meaning,example,exampleKo,known:false,saved:false});
 export const wordKey = (value: string) => value.toLowerCase().replace(/[’‘]/g,"'").replace(/\s+/g," ").trim();
+export function mergeWeeklyWords(weekly:Word[],stored:Word[]) {
+  const merged=new Map(weekly.map(w=>[wordKey(w.english),w]));
+  for(const word of stored)merged.set(wordKey(word.english),word);
+  return [...merged.values()];
+}
 export const starterWords: Word[] = [
   w("commute", "통근하다; 출퇴근", "My commute takes about an hour, so I listen to English on the train.", "출근에 한 시간 정도 걸려서 전철에서 영어를 들어요."),
   w("run late", "예정보다 늦어지다", "I'm running a little late because the train was delayed.", "전철이 지연되어 조금 늦고 있어요."),

@@ -16,11 +16,21 @@ const config = {
   // The operator manages AI activation in the dashboard's Runtime variables.
   // Preserve that setting on future code deployments instead of resetting it.
   keep_vars:true,
+  // 05:00 Korea time daily: prepare next week's pack, at most once per level/day.
+  // Published packs switch on Monday 00:00 KST without waiting for a request to AI.
+  triggers:{crons:["0 20 * * *"]},
   d1_databases:[{binding:"DB",database_name:"morning-english-db",database_id:databaseId,migrations_dir:"drizzle"}],
   observability:{enabled:true},
 };
 writeFileSync(".cloudflare-deploy.json", JSON.stringify(config,null,2)+"\n", {mode:0o600});
 if (process.argv.includes("--build")) {
   const result=spawnSync(process.platform === "win32" ? "npm.cmd" : "npm",["run","build"],{env:{...process.env,DEPLOY_TARGET:"cloudflare"},stdio:"inherit"});
-  process.exit(result.status ?? 1);
+  if(result.status!==0)process.exit(result.status ?? 1);
+  // Workers Builds must migrate before publishing even when the dashboard's
+  // existing deploy command only invokes wrangler deploy. Local builds stay local.
+  if(process.env.WORKERS_CI==="1") {
+    const migrated=spawnSync(process.execPath,["node_modules/wrangler/bin/wrangler.js","d1","migrations","apply","DB","--remote","--config",".cloudflare-deploy.json"],{env:process.env,stdio:"inherit"});
+    if(migrated.status!==0)process.exit(migrated.status ?? 1);
+  }
+  process.exit(0);
 }

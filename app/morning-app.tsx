@@ -16,27 +16,30 @@ import { wordKey } from "./vocabulary-data";
 import Pronunciation from "./pronunciation";
 import AiChat, { type Conversation } from "./ai-chat";
 import AiSettings, { useConnections } from "./ai-settings";
+import { lessonDay, lessonLevel, studyWeek, weeklyIdentity, type Curriculum } from "./weekly-types";
 
 type RecordRow = { lessonId: number; stageId: number; completedAt: string };
 const stageIcons = [Headphones, BookOpen, Mic, MessageCircle, Brain, CheckCircle2];
 const number = (n: number) => String(n).padStart(2, "0");
-const dayNumber = (id: number) => id > 10 ? id - 10 : id;
+const dayNumber = lessonDay;
 type Level = "work" | "basics";
-const allLessons = [...workLessons, ...beginnerLessons];
+const originalLessons = [...workLessons, ...beginnerLessons];
 const speechLines = (text: string, index?: number) => (text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text]).map(line => ({text:line.trim(),index}));
 
 export default function MorningApp() {
   const [tab, setTab] = useState("today");
   const [wideLayout, setWideLayout] = useState(false);
-  const book = useVocabulary();
+  const [curriculum,setCurriculum]=useState<Curriculum|null>(null);
   const connections = useConnections();
   const [aiSettingsOpen,setAiSettingsOpen] = useState(false);
   const [pronunciationText,setPronunciationText] = useState("Could you confirm the delivery date before we place the order?");
   const [conversation,setConversation] = useState<Conversation>({scenario:"commute",messages:[]});
   const [wordNotice,setWordNotice] = useState("");
   const [level, setLevel] = useState<Level>("work");
+  const book = useVocabulary(curriculum?.[level].words);
+  const allLessons = [...originalLessons,...(curriculum?.archiveLessons||[]),...(curriculum?.work.lessons||[]),...(curriculum?.basics.lessons||[])].filter((l,i,a)=>a.findIndex(x=>x.id===l.id)===i);
   const levelRef = useRef<Level>("work");
-  const lessons = level === "work" ? workLessons : beginnerLessons;
+  const lessons = curriculum?.[level].lessons || (level === "work" ? workLessons : beginnerLessons);
   const stages = level === "work" ? workStages : beginnerStages;
   const [day, setDay] = useState(11);
   const [stage, setStage] = useState(0);
@@ -77,13 +80,17 @@ export default function MorningApp() {
   const load = useCallback(async (resume = false) => {
     setLoading(true); setLoadError("");
     try {
-      const response = await fetch("/api/progress", {cache:"no-store"});
+      const [response,courseResponse] = await Promise.all([fetch("/api/progress", {cache:"no-store"}),fetch("/api/curriculum",{cache:"no-store"})]);
       const data = await response.json();
       if (!response.ok || !Array.isArray(data.progress)) throw new Error(data.error || "학습 기록을 불러오지 못했어요.");
+      const courses=await courseResponse.json();
+      if(!courseResponse.ok || !Array.isArray(courses.work?.lessons) || !Array.isArray(courses.basics?.lessons))throw new Error("이번 주 학습 자료를 불러오지 못했어요. 다시 시도해 주세요.");
+      const nextCurriculum=courses as Curriculum;
+      setCurriculum(previous=>({...nextCurriculum,archiveLessons:[...nextCurriculum.archiveLessons,...(previous?.archiveLessons||[]),...(previous?.work.lessons||[]),...(previous?.basics.lessons||[])].filter((l,i,a)=>a.findIndex(x=>x.id===l.id)===i)}));
       const rows = data.progress as RecordRow[]; setRecords(rows);
       setBrowserScoped(data.browserScoped === true);
       if (resume && !interaction.current) {
-        const course = levelRef.current === "work" ? workLessons : beginnerLessons;
+        const course = nextCurriculum[levelRef.current].lessons;
         const next = course.find(l => rows.filter(r => r.lessonId === l.id).length < 6) || course[0];
         const nextStage = beginnerStages.findIndex((_, index) => !rows.some(r => r.lessonId === next.id && r.stageId === index));
         setDay(next.id); setStage(nextStage < 0 ? 0 : nextStage);
@@ -110,6 +117,14 @@ export default function MorningApp() {
     } catch { /* Optional device preferences do not block learning. */ }
     void load(true);
   }, [load]);
+
+  useEffect(()=>{
+    if(!curriculum)return;
+    const check=()=>{if(!document.hidden && studyWeek().weekStart!==curriculum.work.weekStart)void load(false);};
+    const timer=setTimeout(check,Math.max(1000,new Date(curriculum.work.nextUpdateAt).getTime()-Date.now()+1000));
+    window.addEventListener("focus",check);document.addEventListener("visibilitychange",check);
+    return ()=>{clearTimeout(timer);window.removeEventListener("focus",check);document.removeEventListener("visibilitychange",check);};
+  },[curriculum,load]);
 
   const preference = (key: string, value: string | boolean) => {
     if (key === "quiet") { speech.stop(); setQuiet(Boolean(value)); }
@@ -139,13 +154,13 @@ export default function MorningApp() {
   const chooseDay = (id: number) => {
     if (saving) return;
     interaction.current = true; speech.stop(); setDay(id);
-    const nextLevel: Level = id > 10 ? "work" : "basics"; setLevel(nextLevel); levelRef.current = nextLevel; preference("level", nextLevel);
+    const nextLevel: Level = lessonLevel(id); setLevel(nextLevel); levelRef.current = nextLevel; preference("level", nextLevel);
     const next = stages.findIndex((_, i) => !records.some(r => r.lessonId === id && r.stageId === i));
     changeStage(next < 0 ? 0 : next); setTab("today"); window.scrollTo({top:0,behavior:"smooth"});
   };
   const changeLevel = (value: string) => {
     if (saving || (value !== "work" && value !== "basics")) return;
-    const course = value === "work" ? workLessons : beginnerLessons;
+    const course = curriculum?.[value].lessons || (value === "work" ? workLessons : beginnerLessons);
     const next = course.find(l => records.filter(r => r.lessonId === l.id).length < 6) || course[0];
     chooseDay(next.id);
   };
@@ -207,6 +222,9 @@ export default function MorningApp() {
   const activeDateCount = new Set(records.map(r => new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Seoul"}).format(new Date(r.completedAt)))).size;
   const exerciseReady = stage >= 3 ? answered.length === 5 : true;
 
+  if(!curriculum)return <div className="app-shell"><div className="empty-state">{loadError?<><BookOpen size={36}/><h2>이번 주 학습을 열지 못했어요.</h2><p>{loadError}</p><button className="primary-button" onClick={()=>void load(true)}>다시 불러오기</button></>:<><Loader2 className="spin" size={36}/><h2>이번 주 학습을 준비하고 있어요.</h2></>}</div></div>;
+  const weeklyBanner=<section className="weekly-banner" aria-label="주간 학습 안내"><div><strong>{curriculum[level].weekStart.replaceAll("-",".")} 주간 · {curriculum[level].title}</strong><p>매주 월요일 0시 새 학습 · 다음 업데이트 {new Intl.DateTimeFormat("ko-KR",{timeZone:"Asia/Seoul",month:"long",day:"numeric"}).format(new Date(curriculum[level].nextUpdateAt))}</p>{tab==="today" && day>=100000 && weeklyIdentity(day)?.weekStart!==curriculum[level].weekStart && <p>이전에 열었던 수업을 보고 있어요. 새 수업은 ‘이번 주 5일 보기’에서 시작하세요.</p>}<small>{curriculum[level].source==="prepared"?"준비 교재 · 주제별로 핵심 문장을 반복 연습해요.":"AI가 만든 이번 주 교재 · 회화 25개와 단어·표현 10개"}</small></div><button className="secondary-button" onClick={()=>changeTab("course")}>이번 주 5일 보기<ArrowRight size={16}/></button></section>;
+
   return <div className="app-shell">
     <a className="skip-link" href="#study-main">학습으로 바로 가기</a>
     <header className="topbar">
@@ -214,10 +232,10 @@ export default function MorningApp() {
       <div className="top-meta"><span className="top-date">{date}</span><button className="icon-button settings-trigger" aria-label="AI 연결 설정" onClick={()=>setAiSettingsOpen(true)}><Settings2 size={20}/></button><InstallApp browserScoped={browserScoped}/></div>
     </header>
     <Tabs value={tab} onValueChange={changeTab} orientation={wideLayout ? "vertical" : "horizontal"} className={`workspace-tabs tab-${tab}`}>
-      <div className="nav-bar"><TabsList className="main-tabs" variant="line" aria-label="학습 메뉴"><TabsTrigger value="today"><Sunrise/>오늘 회화</TabsTrigger><TabsTrigger value="course"><BookOpen/>10일 코스</TabsTrigger><TabsTrigger value="words"><Bookmark/>단어장</TabsTrigger><TabsTrigger value="pronunciation"><Mic/>발음 확인</TabsTrigger><TabsTrigger value="chat"><MessageCircle/>AI 대화</TabsTrigger><TabsTrigger value="history"><CalendarDays/>학습 기록</TabsTrigger></TabsList><span className="commute-label"><TrainFront size={16}/> 출근길 60분</span></div>
+      <div className="nav-bar"><TabsList className="main-tabs" variant="line" aria-label="학습 메뉴"><TabsTrigger value="today"><Sunrise/>오늘 회화</TabsTrigger><TabsTrigger value="course"><BookOpen/>이번 주 학습</TabsTrigger><TabsTrigger value="words"><Bookmark/>단어장</TabsTrigger><TabsTrigger value="pronunciation"><Mic/>발음 확인</TabsTrigger><TabsTrigger value="chat"><MessageCircle/>AI 대화</TabsTrigger><TabsTrigger value="history"><CalendarDays/>학습 기록</TabsTrigger></TabsList><span className="commute-label"><TrainFront size={16}/> 출근길 60분</span></div>
 
-      <div className="level-bar"><div><span className="level-label">학습 난도</span><Select value={level} onValueChange={changeLevel} disabled={saving}><SelectTrigger className="level-select" aria-label="영어 학습 난도 선택"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="work">실전 초급 · 두세 문장으로 답하기</SelectItem><SelectItem value="basics">기초 다지기 · 짧은 표현부터</SelectItem></SelectContent></Select></div><p>{level === "work" ? "짧은 문장을 연결해 이유를 설명하고, 요청하고, 다시 질문해보세요." : "짧은 인사와 기본 표현을 확인하고 싶을 때 선택하세요."}</p></div>
-      <TabsContent value="today" id="study-main">
+      <div className="level-bar"><div><span className="level-label">학습 난도</span><Select value={level} onValueChange={changeLevel} disabled={saving}><SelectTrigger className="level-select" aria-label="영어 학습 난도 선택"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="work">실전 초급 · 두세 문장으로 답하기</SelectItem><SelectItem value="basics">기초 다지기 · 짧은 표현부터</SelectItem></SelectContent></Select></div><p>{level === "work" ? "짧은 문장을 연결해 이유를 설명하고, 요청하고, 다시 질문해보세요." : "일상과 직장에서 쓸 짧은 문장부터 연습하세요."}</p></div>
+      <TabsContent value="today" id="study-main">{weeklyBanner}
         <div className="page-heading today-heading"><div><p className="eyebrow">MAKE TIME FOR YOURSELF</p><h1>오늘의 한 걸음이,<br/>내일의 영어가 되니까.</h1><p className="heading-sub">{level === "work" ? "오늘도 10분부터. 나의 말로 대화를 이어가요." : "짧은 표현부터, 내 속도로 시작해요."}</p></div><div className="today-progress"><span className="progress-kicker">DAY {number(dayNumber(day))}</span><strong>{loading || loadError ? "—" : done.length}<span> / 6</span></strong><span>이번 수업 완료 단계</span><Progress value={done.length/6*100} aria-label="이번 수업 완료 단계"/></div></div>
         <div className="study-toolbar"><div className="study-focus"><span className="focus-icon"><Headphones size={19}/></span><div><strong>지금은, {stages[stage].title}</strong><span>한 단계 권장 10분 · 표현 5개</span></div></div><div className="quiet-control"><label htmlFor="quiet-mode">조용히 공부하기<small>마이크 없이도 괜찮아요</small></label><Switch id="quiet-mode" checked={quiet} onCheckedChange={v=>preference("quiet",v)}/></div></div>
         {loadError && <div className="status-banner error" role="alert"><span>{loadError} 학습은 계속할 수 있어요.</span><button onClick={()=>void load(false)}>다시 불러오기</button></div>}
@@ -270,16 +288,16 @@ export default function MorningApp() {
         </div>
       </TabsContent>
 
-      <TabsContent value="course"><div className="page-heading"><div><p className="eyebrow">YOUR FIRST TEN MORNINGS</p><h1>{level === "work" ? "실전 초급 · 10일 코스" : "기초 다지기 · 10일 코스"}</h1><p className="heading-sub">{level === "work" ? "일상 대화부터 업무 설명까지, 두세 문장으로 이어가는 회화." : "하루에 한 주제씩. 필요한 상황부터 골라도 좋아요."}</p></div><span className="course-count">{completedDays}<span> / 10일 완료</span></span></div>
+      <TabsContent value="course">{weeklyBanner}<div className="page-heading"><div><p className="eyebrow">FIVE NEW MORNINGS, EVERY WEEK</p><h1>{level === "work" ? "실전 초급 · 이번 주 5일" : "기초 다지기 · 이번 주 5일"}</h1><p className="heading-sub">{level === "work" ? "일상 대화부터 업무 설명까지, 두세 문장으로 이어가는 회화." : "하루에 한 주제씩. 필요한 상황부터 골라도 좋아요."}</p></div><span className="course-count">{completedDays}<span> / {lessons.length}일 완료</span></span></div>
         <div className="course-grid">{lessons.map(l=>{const count=records.filter(r=>r.lessonId===l.id).length; return <button className={`course-card ${l.id===day ? "selected" : ""}`} key={l.id} onClick={()=>chooseDay(l.id)}><div className="course-card-top"><span>DAY {number(dayNumber(l.id))}</span>{count===6 ? <span className="course-status"><CheckCircle2 size={16}/>완료</span> : count>0 ? <span className="course-status">학습 중 · {count}/6</span> : <span>{l.label}</span>}</div><h2>{l.title}</h2><p lang="en">{l.phrases[0].en}</p><div className="course-card-bottom"><span>{level === "work" ? "5개 응답 · 6단계" : "5개 표현 · 6단계"}</span><ChevronRight size={20}/></div></button>;})}</div>
       </TabsContent>
-      <TabsContent value="words"><Wordbook book={book} rate={Number(rate)} onPractice={practicePronunciation}/></TabsContent>
+      <TabsContent value="words">{weeklyBanner}<p className="micro-note">이번 주 표현 10개와 내가 저장한 표현을 함께 보여드려요. 주가 바뀌어도 담아둔 표현과 외운 표시는 유지돼요.</p><Wordbook book={book} rate={Number(rate)} onPractice={practicePronunciation}/></TabsContent>
       <TabsContent value="pronunciation"><Pronunciation initialText={pronunciationText} rate={Number(rate)} connections={connections} onConnect={()=>setAiSettingsOpen(true)}/></TabsContent>
       <TabsContent value="chat"><AiChat conversation={conversation} onConversation={setConversation} level={level} rate={Number(rate)} quiet={quiet} connections={connections} onConnect={()=>setAiSettingsOpen(true)} onPractice={practicePronunciation}/></TabsContent>
       <TabsContent value="history"><div className="page-heading"><div><p className="eyebrow">SMALL STEPS ADD UP</p><h1>차곡차곡, 나의 영어.</h1><p className="heading-sub">{browserScoped ? "기록과 단어장은 이 브라우저에서 이어집니다. 쿠키를 지우거나 다른 기기로 열면 새로 시작해요." : "완료한 단계와 수업을 여기에서 확인하세요."}</p></div></div>
-        <div className="history-stats"><div><CalendarDays/><strong>{activeDateCount}<small>일</small></strong><span>완료 기록이 있는 날</span></div><div><BookOpen/><strong>{allCompletedDays}<small>/ 20</small></strong><span>완료한 수업 · 두 코스 합계</span></div><div><CheckCircle2/><strong>{records.length}<small>단계</small></strong><span>완료한 학습</span></div></div>
+        <div className="history-stats"><div><CalendarDays/><strong>{activeDateCount}<small>일</small></strong><span>완료 기록이 있는 날</span></div><div><BookOpen/><strong>{allCompletedDays}<small>개</small></strong><span>누적 완료 수업 · 지난주 포함</span></div><div><CheckCircle2/><strong>{records.length}<small>단계</small></strong><span>완료한 학습</span></div></div>
         {loadError && <div className="status-banner error" role="alert">{loadError}<button onClick={()=>void load(false)}>다시 불러오기</button></div>}
-        {loading ? <div className="empty-state"><Loader2 className="spin"/><h2>학습 기록을 불러오고 있어요.</h2></div> : records.length===0 ? <div className="empty-state"><Sunrise size={44}/><h2>첫 한 걸음을 기다리고 있어요.</h2><p>학습을 마치고 ‘이 단계 완료’를 누르면 기록이 남아요.</p><button className="primary-button" onClick={()=>changeTab("today")}>오늘의 회화 시작하기<ArrowRight size={18}/></button></div> : <div className="history-list">{allLessons.filter(l=>records.some(r=>r.lessonId===l.id)).map(l=>{const rows=records.filter(r=>r.lessonId===l.id);return <button key={l.id} onClick={()=>chooseDay(l.id)}><span className="history-day">{number(dayNumber(l.id))}</span><div><h2>{l.title}</h2><p>{l.id > 10 ? "실전 초급" : "기초 다지기"} · {new Intl.DateTimeFormat("ko-KR",{timeZone:"Asia/Seoul",month:"long",day:"numeric"}).format(new Date(rows[0].completedAt))} · {rows.length}/6단계 완료</p></div><ChevronRight size={20}/></button>;})}</div>}
+        {loading ? <div className="empty-state"><Loader2 className="spin"/><h2>학습 기록을 불러오고 있어요.</h2></div> : records.length===0 ? <div className="empty-state"><Sunrise size={44}/><h2>첫 한 걸음을 기다리고 있어요.</h2><p>학습을 마치고 ‘이 단계 완료’를 누르면 기록이 남아요.</p><button className="primary-button" onClick={()=>changeTab("today")}>오늘의 회화 시작하기<ArrowRight size={18}/></button></div> : <div className="history-list">{allLessons.filter(l=>records.some(r=>r.lessonId===l.id)).map(l=>{const rows=records.filter(r=>r.lessonId===l.id);return <button key={l.id} onClick={()=>chooseDay(l.id)}><span className="history-day">{number(dayNumber(l.id))}</span><div><h2>{l.title}</h2><p>{lessonLevel(l.id) === "work" ? "실전 초급" : "기초 다지기"} · {new Intl.DateTimeFormat("ko-KR",{timeZone:"Asia/Seoul",month:"long",day:"numeric"}).format(new Date(rows[0].completedAt))} · {rows.length}/6단계 완료</p></div><ChevronRight size={20}/></button>;})}</div>}
       </TabsContent>
     </Tabs>
     <AiSettings open={aiSettingsOpen} onOpenChange={setAiSettingsOpen} connections={connections}/>

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+
 @import "tw-animate-css";
 @import "../vendor/shadcn-tailwind-4.13.0.css";
 @import "./features.css";
@@ -706,3 +707,11 @@ button:focus-visible,input:focus-visible,a:focus-visible { outline-color:#7dac86
   .study-toolbar { flex-wrap:wrap; }
   .timer-card { padding:18px; }
 }
+
+.weekly-banner {display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 24px;padding:18px 22px;border:1px solid #d5e4d9;border-radius:16px;background:#f2f7f0;color:#294c3b;}
+.weekly-banner>div {min-width:0;}
+.weekly-banner strong {display:block;font-size:15px;line-height:1.6;word-break:keep-all;}
+.weekly-banner p {margin:4px 0;font-size:13px;line-height:1.6;}
+.weekly-banner small {font-size:12px;opacity:.8;}
+.weekly-banner button {flex-shrink:0;}
+@media(max-width:640px) {.weekly-banner {align-items:flex-start;flex-direction:column;padding:16px;}.weekly-banner button {width:100%;justify-content:center;}}

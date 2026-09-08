@@ -1,4 +1,15 @@
 import { integer, sqliteTable, text, primaryKey } from "drizzle-orm/sqlite-core";
+export const weeklyCurriculum = sqliteTable("weekly_curriculum", {
+  weekStart:text("week_start").notNull(),
+  level:text("level").notNull(),
+  payload:text("payload").notNull(),
+  createdAt:text("created_at").notNull(),
+}, table=>[primaryKey({columns:[table.weekStart,table.level]})]);
+export const weeklyGenerationAttempts = sqliteTable("weekly_generation_attempts", {
+  weekStart:text("week_start").notNull(),
+  level:text("level").notNull(),
+  attemptDay:text("attempt_day").notNull(),
+}, table=>[primaryKey({columns:[table.weekStart,table.level,table.attemptDay]})]);
 export const studyProgress = sqliteTable("study_progress", {
   userId: text("user_id").notNull(),
   lessonId: integer("lesson_id").notNull(),
