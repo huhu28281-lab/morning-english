@@ -760,3 +760,8 @@ button:focus-visible,input:focus-visible,a:focus-visible { outline-color:#7dac86
 @media(prefers-reduced-motion:reduce) {.lesson-days .completion-chick {animation:none;}}
 
 .weekday-mascot {display:block;background-image:url("/weekday-friends.webp");background-size:200% 200%;background-repeat:no-repeat;background-color:#fff;}
+
+/* Transparent pose sprites replace whole-image rocking. */
+.mascot-sprite {display:block;background-size:300% 200%;background-repeat:no-repeat;background-color:transparent;border-radius:0;}
+.chick-button .mascot-sprite,.chick-button.is-dancing .mascot-sprite,.lesson-days .mascot-sprite {animation:none;transform:none;border-radius:0;}
+.chick-button {border-radius:12px;}
