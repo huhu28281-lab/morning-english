@@ -236,9 +236,10 @@ export default function MorningApp() {
       {curriculum[level].lessons.map((item,index)=>{
         const dateForLesson=lessonDate(curriculum[level].weekStart,index+1);
         const isToday=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Seoul"}).format(dateForLesson)===new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Seoul"}).format(new Date());
-        return <button key={item.id} type="button" disabled={saving} onClick={()=>chooseDay(item.id)} aria-pressed={tab==="today" && day===item.id} aria-label={`${index+1}일차, ${new Intl.DateTimeFormat("ko-KR",{timeZone:"Asia/Seoul",month:"long",day:"numeric",weekday:"long"}).format(dateForLesson)}${isToday?", 오늘":""}`}>
+        const completed=Array.from({length:6},(_,stageId)=>stageId).every(stageId=>records.some(r=>r.lessonId===item.id && r.stageId===stageId));
+        return <button key={item.id} type="button" disabled={saving} onClick={()=>chooseDay(item.id)} aria-pressed={tab==="today" && day===item.id} aria-label={`${index+1}일차, ${new Intl.DateTimeFormat("ko-KR",{timeZone:"Asia/Seoul",month:"long",day:"numeric",weekday:"long"}).format(dateForLesson)}${isToday?", 오늘":""}${completed?", 학습 완료":""}`}>
           <span>{["월","화","수","목","금"][index]} <time dateTime={new Date(dateForLesson.getTime()+9*3600000).toISOString().slice(0,10)}>{new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Seoul",month:"numeric",day:"numeric"}).format(dateForLesson)}</time></span>
-          <strong>{index+1}일차</strong><small>{isToday?"오늘":records.filter(r=>r.lessonId===item.id).length===6?"완료":"학습"}</small>
+          <strong>{index+1}일차</strong>{completed && <img className="completion-chick" src="/morning-chick-hooray.webp" alt="만세 병아리" width={48} height={48}/>}<small>{completed?(isToday?"오늘 · 완료":"완료"):isToday?"오늘":"학습"}</small>
         </button>;
       })}
     </nav>
