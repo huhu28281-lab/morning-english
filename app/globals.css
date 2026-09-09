@@ -758,3 +758,5 @@ button:focus-visible,input:focus-visible,a:focus-visible { outline-color:#7dac86
 
 .lesson-days .completion-chick {transform-origin:50% 90%;animation:chick-dance 800ms ease-in-out 5;}
 @media(prefers-reduced-motion:reduce) {.lesson-days .completion-chick {animation:none;}}
+
+.weekday-mascot {display:block;background-image:url("/weekday-friends.webp");background-size:200% 200%;background-repeat:no-repeat;background-color:#fff;}

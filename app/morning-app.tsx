@@ -18,6 +18,7 @@ import AiChat, { type Conversation } from "./ai-chat";
 import { useConnections } from "./use-connections";
 import StudyGuide from "./study-guide";
 import DancingChick from "./dancing-chick";
+import WeekdayMascot from "./weekday-mascot";
 import { lessonDay, lessonLevel, studyWeek, weeklyIdentity, scheduledDay, lessonDate, type Curriculum } from "./weekly-types";
 
 type RecordRow = { lessonId: number; stageId: number; completedAt: string };
@@ -239,7 +240,7 @@ export default function MorningApp() {
         const completed=Array.from({length:6},(_,stageId)=>stageId).every(stageId=>records.some(r=>r.lessonId===item.id && r.stageId===stageId));
         return <button key={item.id} type="button" disabled={saving} onClick={()=>chooseDay(item.id)} aria-pressed={tab==="today" && day===item.id} aria-label={`${index+1}일차, ${new Intl.DateTimeFormat("ko-KR",{timeZone:"Asia/Seoul",month:"long",day:"numeric",weekday:"long"}).format(dateForLesson)}${isToday?", 오늘":""}${completed?", 학습 완료":""}`}>
           <span>{["월","화","수","목","금"][index]} <time dateTime={new Date(dateForLesson.getTime()+9*3600000).toISOString().slice(0,10)}>{new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Seoul",month:"numeric",day:"numeric"}).format(dateForLesson)}</time></span>
-          <strong>{index+1}일차</strong>{completed && <img className="completion-chick" src="/morning-chick-hooray.webp" alt="만세 병아리" width={48} height={48}/>}<small>{completed?(isToday?"오늘 · 완료":"완료"):isToday?"오늘":"학습"}</small>
+          <strong>{index+1}일차</strong>{completed && <WeekdayMascot day={index+1} completed className="completion-chick"/>}<small>{completed?(isToday?"오늘 · 완료":"완료"):isToday?"오늘":"학습"}</small>
         </button>;
       })}
     </nav>
@@ -248,7 +249,7 @@ export default function MorningApp() {
 
       <div className="level-bar"><div><span className="level-label">학습 난도</span><Select value={level} onValueChange={changeLevel} disabled={saving}><SelectTrigger className="level-select" aria-label="영어 학습 난도 선택"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="work">실전 초급 · 두세 문장으로 답하기</SelectItem><SelectItem value="basics">기초 다지기 · 짧은 표현부터</SelectItem></SelectContent></Select></div><p>{level === "work" ? "짧은 문장을 연결해 이유를 설명하고, 요청하고, 다시 질문해보세요." : "일상과 직장에서 쓸 짧은 문장부터 연습하세요."}</p></div>
       <TabsContent value="today" id="study-main">{weeklyBanner}
-        <div className="page-heading today-heading"><div className="today-intro"><DancingChick/><div><p className="eyebrow">MAKE TIME FOR YOURSELF</p><h1>오늘의 회화</h1><p className="heading-sub">{level === "work" ? "상황을 듣고, 내 말로 답해보세요." : "짧은 문장부터 차근차근 연습해보세요."}</p></div></div><div className="today-progress"><span className="progress-kicker">DAY {number(dayNumber(day))}</span><strong>{loading || loadError ? "—" : done.length}<span> / 6</span></strong><span>이번 수업 완료 단계</span><Progress value={done.length/6*100} aria-label="이번 수업 완료 단계"/></div></div>
+        <div className="page-heading today-heading"><div className="today-intro"><DancingChick key={day} day={dayNumber(day)}/><div><p className="eyebrow">MAKE TIME FOR YOURSELF</p><h1>오늘의 회화</h1><p className="heading-sub">{level === "work" ? "상황을 듣고, 내 말로 답해보세요." : "짧은 문장부터 차근차근 연습해보세요."}</p></div></div><div className="today-progress"><span className="progress-kicker">DAY {number(dayNumber(day))}</span><strong>{loading || loadError ? "—" : done.length}<span> / 6</span></strong><span>이번 수업 완료 단계</span><Progress value={done.length/6*100} aria-label="이번 수업 완료 단계"/></div></div>
         <div className="study-toolbar"><div className="study-focus"><span className="focus-icon"><Headphones size={19}/></span><div><strong>지금은, {stages[stage].title}</strong><span>한 단계 권장 10분 · 표현 5개</span></div></div><div className="quiet-control"><label htmlFor="quiet-mode">입력으로 연습</label><Switch id="quiet-mode" checked={quiet} onCheckedChange={v=>preference("quiet",v)}/></div></div>
         {loadError && <div className="status-banner error" role="alert"><span>{loadError} 학습은 계속할 수 있어요.</span><button onClick={()=>void load(false)}>다시 불러오기</button></div>}
         <div className="learning-grid">
