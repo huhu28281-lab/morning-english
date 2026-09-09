@@ -11,6 +11,7 @@ export default function DancingChick({ variant = "home", day=1 }: { variant?: "h
     return () => window.clearTimeout(timeout);
   }, [dancing]);
   return <button type="button" className={`chick-button ${variant === "empty" ? "chick-empty" : ""} ${dancing ? "is-dancing" : ""}`} onClick={() => setDancing(value => !value)} aria-label={dancing ? `${name} 동작 멈추기` : `${name} 손 흔들기`} aria-pressed={dancing} title={dancing ? "동작 멈추기" : "눌러서 손 흔들기"}>
+    {day===4 && dancing && <span className="mascot-bubble" role="status">I'm 그루트</span>}
     <WeekdayMascot day={day} playing={dancing} className="morning-mascot"/>
   </button>;
 }

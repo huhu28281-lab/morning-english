@@ -765,3 +765,8 @@ button:focus-visible,input:focus-visible,a:focus-visible { outline-color:#7dac86
 .mascot-sprite {display:block;background-size:300% 200%;background-repeat:no-repeat;background-color:transparent;border-radius:0;}
 .chick-button .mascot-sprite,.chick-button.is-dancing .mascot-sprite,.lesson-days .mascot-sprite {animation:none;transform:none;border-radius:0;}
 .chick-button {border-radius:12px;}
+
+.chick-button {position:relative;}
+.groot-mascot {background:transparent;object-fit:contain;border-radius:0;}
+.mascot-bubble {position:absolute;z-index:3;left:50%;bottom:calc(100% - 6px);transform:translateX(-50%);white-space:nowrap;background:#fff;color:#194b37;border:1px solid #afc4b4;border-radius:14px;padding:8px 12px;font-size:14px;font-weight:650;box-shadow:0 4px 12px #17342f14;pointer-events:none;}
+.mascot-bubble::after {content:"";position:absolute;left:50%;bottom:-5px;width:8px;height:8px;background:#fff;border-right:1px solid #afc4b4;border-bottom:1px solid #afc4b4;transform:translateX(-50%) rotate(45deg);}
