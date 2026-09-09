@@ -755,3 +755,6 @@ button:focus-visible,input:focus-visible,a:focus-visible { outline-color:#7dac86
 @media(max-width:480px) {.lesson-days {gap:5px;margin:12px 0 16px;}.lesson-days button {padding:10px 3px;border-radius:10px;}.lesson-days time {display:block;margin:2px 0 0;}}
 
 .lesson-days .completion-chick {display:block;width:48px;height:48px;object-fit:contain;border-radius:12px;}
+
+.lesson-days .completion-chick {transform-origin:50% 90%;animation:chick-dance 800ms ease-in-out 5;}
+@media(prefers-reduced-motion:reduce) {.lesson-days .completion-chick {animation:none;}}
