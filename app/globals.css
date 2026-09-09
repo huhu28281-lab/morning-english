@@ -770,3 +770,25 @@ button:focus-visible,input:focus-visible,a:focus-visible { outline-color:#7dac86
 .groot-mascot {background:transparent;object-fit:contain;border-radius:0;}
 .mascot-bubble {position:absolute;z-index:3;left:50%;bottom:calc(100% - 6px);transform:translateX(-50%);white-space:nowrap;background:#fff;color:#194b37;border:1px solid #afc4b4;border-radius:14px;padding:8px 12px;font-size:14px;font-weight:650;box-shadow:0 4px 12px #17342f14;pointer-events:none;}
 .mascot-bubble::after {content:"";position:absolute;left:50%;bottom:-5px;width:8px;height:8px;background:#fff;border-right:1px solid #afc4b4;border-bottom:1px solid #afc4b4;transform:translateX(-50%) rotate(45deg);}
+
+/* Independent photo layers rotate around shoulders and hips. */
+.groot-rig {position:relative;display:block;background:transparent;border-radius:0;isolation:isolate;}
+.chick-button .groot-rig,.chick-button.is-dancing .groot-rig,.lesson-days .groot-rig {animation:none;transform:none;border-radius:0;}
+.groot-rig .groot-part {position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;}
+.groot-left-arm {transform-origin:43.36% 42.97%;}
+.groot-right-arm {transform-origin:58.59% 43.75%;}
+.groot-left-leg {transform-origin:45.31% 66.41%;}
+.groot-right-leg {transform-origin:55.08% 66.41%;}
+.groot-playing .groot-left-arm {animation:groot-wave-left 3.2s ease-in-out;}
+.groot-playing .groot-right-arm {animation:groot-wave-right 3.2s ease-in-out;}
+.groot-playing .groot-left-leg {animation:groot-stride-left 600ms ease-in-out 5;}
+.groot-playing .groot-right-leg {animation:groot-stride-right 600ms ease-in-out 5;}
+.groot-completed .groot-left-arm {animation:groot-cheer-left 700ms ease-in-out 4 forwards;}
+.groot-completed .groot-right-arm {animation:groot-cheer-right 700ms ease-in-out 4 forwards;}
+@keyframes groot-wave-left {0%,100% {transform:rotate(0deg);}12%,32% {transform:rotate(90deg);}22%,42% {transform:rotate(60deg);}55%,75% {transform:rotate(25deg);}65%,85% {transform:rotate(-12deg);}}
+@keyframes groot-wave-right {0%,100% {transform:rotate(0deg);}12%,32% {transform:rotate(-55deg);}22%,42% {transform:rotate(-80deg);}55%,75% {transform:rotate(12deg);}65%,85% {transform:rotate(-25deg);}}
+@keyframes groot-stride-left {0%,100% {transform:rotate(0deg);}25% {transform:rotate(15deg);}75% {transform:rotate(-13deg);}}
+@keyframes groot-stride-right {0%,100% {transform:rotate(0deg);}25% {transform:rotate(-13deg);}75% {transform:rotate(15deg);}}
+@keyframes groot-cheer-left {0% {transform:rotate(0deg);}55% {transform:rotate(95deg);}100% {transform:rotate(75deg);}}
+@keyframes groot-cheer-right {0% {transform:rotate(0deg);}55% {transform:rotate(-95deg);}100% {transform:rotate(-75deg);}}
+@media(prefers-reduced-motion:reduce) {.groot-rig .groot-part {animation:none;}}
