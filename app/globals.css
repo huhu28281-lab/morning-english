@@ -792,3 +792,24 @@ button:focus-visible,input:focus-visible,a:focus-visible { outline-color:#7dac86
 @keyframes groot-cheer-left {0% {transform:rotate(0deg);}55% {transform:rotate(95deg);}100% {transform:rotate(75deg);}}
 @keyframes groot-cheer-right {0% {transform:rotate(0deg);}55% {transform:rotate(-95deg);}100% {transform:rotate(-75deg);}}
 @media(prefers-reduced-motion:reduce) {.groot-rig .groot-part {animation:none;}}
+
+/* Leaf character: separate joints and an automatic eyelid overlay. */
+.leaf-left-arm {transform-origin:44.67% 59.93%;animation:leaf-arm-rest 4.8s ease-in-out infinite;}
+.leaf-right-arm {transform-origin:59.19% 59.38%;animation:leaf-wave 4.8s ease-in-out infinite;}
+.leaf-left-leg {transform-origin:48.16% 75.55%;animation:leaf-step-left 4.8s ease-in-out infinite;}
+.leaf-right-leg {transform-origin:56.07% 75.37%;animation:leaf-step-right 4.8s ease-in-out infinite;}
+.leaf-blink {opacity:0;animation:leaf-blink 4.8s linear infinite;}
+.groot-playing .leaf-left-arm,.groot-completed .leaf-left-arm {animation:leaf-arm-play 800ms ease-in-out 4;}
+.groot-playing .leaf-right-arm,.groot-completed .leaf-right-arm {animation:leaf-wave-play 800ms ease-in-out 4;}
+.groot-playing .leaf-left-leg,.groot-completed .leaf-left-leg {animation:leaf-run-left 640ms ease-in-out 5;}
+.groot-playing .leaf-right-leg,.groot-completed .leaf-right-leg {animation:leaf-run-right 640ms ease-in-out 5;}
+@keyframes leaf-arm-rest {0%,55%,100% {transform:rotate(0deg);}65%,85% {transform:rotate(9deg);}75% {transform:rotate(-6deg);}}
+@keyframes leaf-wave {0%,15%,60%,100% {transform:rotate(0deg);}25%,45% {transform:rotate(-20deg);}35%,55% {transform:rotate(16deg);}}
+@keyframes leaf-step-left {0%,60%,100% {transform:rotate(0deg);}70%,90% {transform:rotate(-8deg);}80% {transform:rotate(8deg);}}
+@keyframes leaf-step-right {0%,60%,100% {transform:rotate(0deg);}70%,90% {transform:rotate(8deg);}80% {transform:rotate(-8deg);}}
+@keyframes leaf-blink {0%,35%,40%,76%,81%,100% {opacity:0;}36%,39%,77%,80% {opacity:1;}}
+@keyframes leaf-arm-play {0%,100% {transform:rotate(0deg);}25% {transform:rotate(18deg);}75% {transform:rotate(-12deg);}}
+@keyframes leaf-wave-play {0%,100% {transform:rotate(0deg);}25% {transform:rotate(-24deg);}75% {transform:rotate(20deg);}}
+@keyframes leaf-run-left {0%,100% {transform:rotate(0deg);}25% {transform:rotate(-12deg);}75% {transform:rotate(10deg);}}
+@keyframes leaf-run-right {0%,100% {transform:rotate(0deg);}25% {transform:rotate(12deg);}75% {transform:rotate(-10deg);}}
+@media(prefers-reduced-motion:reduce) {.leaf-rig .groot-part {animation:none;}.leaf-blink {opacity:0;}}
